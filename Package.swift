@@ -45,7 +45,7 @@ let devTargets: [Target] = when(test, [
 
 let package = Package(
     name: "Mockable",
-    platforms: [.macOS(.v12), .iOS(.v13), .tvOS(.v13), .watchOS(.v6), .macCatalyst(.v13)],
+    platforms: [.macOS(.v13), .iOS(.v13), .tvOS(.v13), .watchOS(.v6), .macCatalyst(.v13)],
     products: [
         .library(
             name: "Mockable",
@@ -54,14 +54,16 @@ let package = Package(
     ],
     dependencies: devDependencies + [
         .package(url: "https://github.com/swiftlang/swift-syntax.git", "509.0.0"..<"601.0.0"),
-        .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", .upToNextMajor(from: "1.4.1"))
+        .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", .upToNextMajor(from: "1.4.1")),
+        .package(url: "https://github.com/Tyler-Keith-Thompson/Afluent.git", from: "0.6.13"),
     ],
     targets: devTargets + [
         .target(
             name: "Mockable",
             dependencies: [
                 "MockableMacro",
-                .product(name: "IssueReporting", package: "xctest-dynamic-overlay")
+                .product(name: "IssueReporting", package: "xctest-dynamic-overlay"),
+                .product(name: "Afluent", package: "Afluent"),
             ],
             swiftSettings: [
                 .enableExperimentalFeature("StrictConcurrency"),

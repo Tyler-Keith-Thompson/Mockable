@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import Combine
+@_spi(Experimental) import Afluent
 import IssueReporting
 
 /// A class responsible for mocking and verifying interactions with a mockable service.
@@ -34,8 +34,7 @@ public class Mocker<Service: MockableService>: @unchecked Sendable {
     private var _returns = [Member: [Return]]()
     /// Dictionary to store actions to be performed on each member.
     private var _actions = [Member: [Action]]()
-    /// Array to store invocations of members.
-    @Published private var _invocations = [Member]()
+    private var _invocations = CurrentValueSubject([Member]())
 
     /// Synchornized access to return values
     private var returns: [Member: [Return]] {
@@ -51,13 +50,13 @@ public class Mocker<Service: MockableService>: @unchecked Sendable {
 
     /// Synchornized access to invocations
     private var invocations: [Member] {
-        get { queue.sync { _invocations } }
-        set { queue.sync { _invocations = newValue } }
+        get { queue.sync { _invocations.value } }
+        set { queue.sync { _invocations.value = newValue } }
     }
 
     /// Async stream of invocations
-    private var invocationsStream: AsyncStream<[Member]> {
-        $_invocations.receive(on: queue).stream
+    private var invocationsStream: AnyAsyncSequence<[Member]> {
+        _invocations.eraseToAnyAsyncSequence()
     }
 
     /// Resolved relaxation policy to use when missing return values.
@@ -137,7 +136,7 @@ public class Mocker<Service: MockableService>: @unchecked Sendable {
                        column: UInt = #column) async {
         do {
             try await withTimeout(after: timeout.duration) {
-                for await invocations in self.invocationsStream {
+                for try await invocations in self.invocationsStream {
                     let matches = invocations.filter(member.match)
                     if count.satisfies(matches.count) {
                         break
